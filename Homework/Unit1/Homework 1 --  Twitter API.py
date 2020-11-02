@@ -286,5 +286,5 @@ def friends_of_friends(names, keys=[], to_df=False, full_search=False):
     else:
         return common_friends
 
-friends_of_friends(['ezraklein', 'tylercowen'], keys=['id', 'name'], to_df=True, full_search=True)
+
 
