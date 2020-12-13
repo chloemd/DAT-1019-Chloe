@@ -1,0 +1,13 @@
+COLUMN DESCRIPTIONS OF RESTAURANT DATASET
+
+ - id:  unique id of the restaurant being studied
+ - visit_date: date being recorded
+ - visitors:  number of visitors that showed up during that day
+ - calendar_date:  calendar date for that day.  Either this or visit_date can be discarded
+ - day_of_week:  what day of the week it is
+ - holiday: whether or not that day was a japanese holiday
+ - genre:  the genre of restaurant
+ - area:  area of japan the restaurant was located in
+ - latitude:  the latitude coordinate of the restaurant
+ - longitude:  the longitude coordinate of the restaurant
+ - reserve_visitors:  how many reservations the restaurant had via its online booking system

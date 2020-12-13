@@ -1,0 +1,10 @@
+  - datetime: a timestamp collected hourly.
+  - season: a categorical column that lists the current season for that observation
+  - holiday: a column (0 or 1), that detects whether or not it was a holiday
+  - workingday: a column (0 or 1), that encodes whether or not it was a workday or not
+  - weather: a categorical column that lists a light weather description for the observation
+  - temp: the temperature outside
+  - atemp: the temperature it feels like outside
+  - humidity: the humidity outside
+  - windspeed: the windspeed, in mph
+  - count: the number of bikes checked out during that hour

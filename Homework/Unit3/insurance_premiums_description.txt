@@ -1,0 +1,9 @@
+COLUMN DESCRIPTIONS FOR INSURANCE PREMIUMS DATASET
+
+ - age:  age of insurance payor
+ - sex:  sex of insurance payor
+ - bmi:  bmi of insurance payor
+ - children:  # of children of insurance payor
+ - smoker:  whether or not the payor smokes
+ - region:  region of the country where the payor is located
+ - charges: total amount of insurance premiums paid by insurance payor
