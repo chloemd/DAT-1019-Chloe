@@ -8,8 +8,7 @@ Created on Wed Dec 23 18:06:19 2020
 import streamlit as st
 
 title = 'Our New Application'
-# st.sidebar.number_input('Number of Boosting Rounds',
-#                                 min_value=100, max_value=5000, step=100)
+
 
 
 import streamlit as st
@@ -27,7 +26,7 @@ import plotly.express as px
 
 
 style.use('ggplot')
-st.title("Our First Data Application")
+st.title("Explore Iowa Housing Data")
 
 @st.cache
 def load_data():
@@ -49,11 +48,13 @@ df = load_data()
 
 
 page = st.sidebar.radio('Section',
-                        ['Data Explorer', 'Model Explorer', 'Causal Impact'])
+                        ['Data Explorer', 'Model Explorer'])
+
+
 
 if page == 'Data Explorer':
 
-    st.write(df)
+    st.write(df.head())
     
     x_axis = st.sidebar.selectbox(
         'X-Axis',
