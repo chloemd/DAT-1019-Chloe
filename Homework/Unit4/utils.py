@@ -5,6 +5,7 @@ Created on Mon Sep 14 20:39:06 2020
 @author: Jonathan
 """
 from sklearn.model_selection import train_test_split, cross_val_score
+import pandas as pd
 
 
 def extract_dates(df, cols=None, drop_cols=False, date_parts=None, get_history=True, history_type=['days']):
