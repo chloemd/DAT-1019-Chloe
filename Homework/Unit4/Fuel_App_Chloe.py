@@ -31,12 +31,12 @@ st.title("Fuel Economy Data")
 
 @st.cache
 def load_data():
-    df = pd.read_csv(r"C:\Users\chloe\Data Science\Heroku Deployments\streamlit practice\fuel_eco_clean.csv")
+    df = pd.read_csv(r"C:\Users\chloe\Data Science\DAT-1019-Chloe\Homework\Unit4\data\fuel_eco_clean.csv")
     return df
 
 @st.cache
 def load_urls():
-    urls = pd.read_csv(r"C:\Users\chloe\Data Science\Heroku Deployments\streamlit practice\fuelgov_img_urls.csv")
+    urls = pd.read_csv(r"C:\Users\chloe\Data Science\DAT-1019-Chloe\Homework\Unit4\data\fuelgov_img_urls.csv")
     return urls
 
 @st.cache
@@ -49,9 +49,20 @@ def create_plotly_graph_data(x_axis, y_axis):
     data = df.groupby(x_axis)[y_axis].mean().to_frame().reset_index()
     return data
 
-df = load_data()
-urls = load_urls()
+@st.cache
+def return_stats(df):
+    avg_stats = df.groupby(['Year', 'Make', 'Model'])[['Combined MPG (FT1)', 
+                                                 'City MPG (FT1)', 'Highway MPG (FT1)',
+                                                 'Annual Fuel Cost (FT1)', 'Tailpipe CO2 (FT1)']]
+    avg_stats = avg_stats.mean().reset_index()
+    return avg_stats
 
+st.cache()
+df = load_data()
+st.cache() 
+urls = load_urls()
+st.cache()
+avg_stats = return_stats(df)
 
 
 page = st.sidebar.radio('Section',
@@ -60,12 +71,24 @@ page = st.sidebar.radio('Section',
 
 
 if page == 'Data Explorer':
+    st.markdown("""
+                <style>
+                table td:nth-child(1) {
+                    display: none
+                    }
+                table th:nth-child(1) {
+                    display: none
+                    }
+                </style>
+                """, unsafe_allow_html=True)
     
     
-    st.write(df[['Year', 'Make', 'Model', 'Combined MPG (FT1)']].head(5))
     
     x_cols = ['Year', 'Class', 'Drive', 'Transmission', 'Fuel Type', 'Engine Cylinders', 'Engine Displacement']
     y_cols = ['Combined MPG (FT1)', 'City MPG (FT1)', 'Highway MPG (FT1)', 'Annual Fuel Cost (FT1)', 'Tailpipe CO2 (FT1)']
+    sort_table = st.sidebar.selectbox('Sort Data',
+                        ['Ascending', 'Descending'])
+    sort_bool = sort_table == 'Ascending'
     
     x_axis = st.sidebar.selectbox(
         'X-Axis',
@@ -78,12 +101,27 @@ if page == 'Data Explorer':
             # df.select_dtypes(include=np.number).columns.tolist()
             )
     
+    want_min = ['Annual Fuel Cost (FT1)', 'Tailpipe CO2 (FT1)']
+    
+    if y_axis in want_min:
+        if sort_bool:
+            st.subheader(f"5 Best Vehicles for: {y_axis}")
+        else:
+            st.subheader(f"5 Worst Vehicles for: {y_axis}")
+    elif y_axis not in want_min:
+        if sort_bool:
+            st.subheader(f"5 Worst Vehicles for: {y_axis}")
+        else:
+            st.subheader(f"5 Best Vehicles for: {y_axis}")
+            
+    st.table(avg_stats.sort_values(y_axis, ascending=sort_bool).iloc[:5][['Year', 'Make', 'Model', y_axis]])
+    
     chart_type = st.sidebar.selectbox(
             'Select a chart type:',
             ['Line', 'Bar', 'Box'])
     
-    st.subheader(f"Breaking Down {y_axis} by: {x_axis}")
     
+    st.subheader(f"Breaking Down {y_axis} by: {x_axis}")
     if chart_type == 'Line':
         data = create_groupby_object(x_axis, y_axis)
         st.line_chart(data)
