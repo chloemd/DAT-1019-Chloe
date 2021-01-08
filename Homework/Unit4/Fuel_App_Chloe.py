@@ -2,7 +2,7 @@
 """
 Created on Wed Dec 23 18:06:19 2020
 
-@author: chloe
+@author: chloe 
 """
 
 import streamlit as st
@@ -50,10 +50,8 @@ def create_plotly_graph_data(x_axis, y_axis):
     return data
 
 @st.cache
-def return_stats(df):
-    avg_stats = df.groupby(['Year', 'Make', 'Model'])[['Combined MPG (FT1)', 
-                                                 'City MPG (FT1)', 'Highway MPG (FT1)',
-                                                 'Annual Fuel Cost (FT1)', 'Tailpipe CO2 (FT1)']]
+def return_stats(df, y_cols):
+    avg_stats = df.groupby(['Year', 'Make', 'Model'])[y_cols]
     avg_stats = avg_stats.mean().reset_index()
     return avg_stats
 
@@ -61,8 +59,7 @@ st.cache()
 df = load_data()
 st.cache() 
 urls = load_urls()
-st.cache()
-avg_stats = return_stats(df)
+
 
 
 page = st.sidebar.radio('Section',
@@ -83,9 +80,13 @@ if page == 'Data Explorer':
                 """, unsafe_allow_html=True)
     
     
-    
     x_cols = ['Year', 'Class', 'Drive', 'Transmission', 'Fuel Type', 'Engine Cylinders', 'Engine Displacement']
-    y_cols = ['Combined MPG (FT1)', 'City MPG (FT1)', 'Highway MPG (FT1)', 'Annual Fuel Cost (FT1)', 'Tailpipe CO2 (FT1)']
+    y_cols = ['Combined MPG (FT1)', 'City MPG (FT1)', 'Fuel Economy Score',
+              'Highway MPG (FT1)', 'Annual Fuel Cost (FT1)', 'Tailpipe CO2 (FT1)']
+    
+    st.cache()
+    avg_stats = return_stats(df, y_cols)
+    
     sort_table = st.sidebar.selectbox('Sort Data',
                         ['Ascending', 'Descending'])
     sort_bool = sort_table == 'Ascending'
@@ -105,16 +106,16 @@ if page == 'Data Explorer':
     
     if y_axis in want_min:
         if sort_bool:
-            st.subheader(f"5 Best Vehicles for: {y_axis}")
+            st.subheader(f"5 Best Vehicles for {y_axis}")
         else:
-            st.subheader(f"5 Worst Vehicles for: {y_axis}")
+            st.subheader(f"5 Worst Vehicles for {y_axis}")
     elif y_axis not in want_min:
         if sort_bool:
-            st.subheader(f"5 Worst Vehicles for: {y_axis}")
+            st.subheader(f"5 Worst Vehicles for {y_axis}")
         else:
-            st.subheader(f"5 Best Vehicles for: {y_axis}")
+            st.subheader(f"5 Best Vehicles for {y_axis}")
             
-    st.table(avg_stats.sort_values(y_axis, ascending=sort_bool).iloc[:5][['Year', 'Make', 'Model', y_axis]])
+    st.table(avg_stats[avg_stats[y_axis] > 0].sort_values(y_axis, ascending=sort_bool).iloc[:5][['Year', 'Make', 'Model', y_axis]])
     
     chart_type = st.sidebar.selectbox(
             'Select a chart type:',
@@ -149,10 +150,11 @@ if page == 'Vehicle Details':
                 </style>
                 """, unsafe_allow_html=True)
     car_info_cols = ['Class', 'Transmission','Combined MPG (FT1)', 'City MPG (FT1)', 'Highway MPG (FT1)', 'Annual Fuel Cost (FT1)', 'Fuel Economy Score']
+    unique_years = df['Year'].unique().tolist()
     year = st.sidebar.selectbox(
         'Model Year',
-        df['Year'].unique().tolist(),
-        index=1)
+        unique_years,
+        index=len(unique_years)-1)
     
     make = st.sidebar.selectbox(
         'Make',
