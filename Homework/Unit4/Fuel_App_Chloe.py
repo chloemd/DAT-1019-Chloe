@@ -25,18 +25,18 @@ from pdpbox import pdp
 import plotly.express as px
 import plotly.graph_objects as go
 
-
+st.set_page_config(layout="wide")
 style.use('ggplot')
 st.title("Fuel Economy Data")
 
 @st.cache
 def load_data():
-    df = pd.read_csv(r"C:\Users\chloe\Data Science\DAT-1019-Chloe\Homework\Unit4\data\fuel_eco_clean.csv")
+    df = pd.read_csv("https://raw.githubusercontent.com/chloemd/DAT-1019-Chloe/main/Homework/Unit4/data/fuel_eco_clean.csv")
     return df
 
 @st.cache
 def load_urls():
-    urls = pd.read_csv(r"C:\Users\chloe\Data Science\DAT-1019-Chloe\Homework\Unit4\data\fuelgov_img_urls.csv")
+    urls = pd.read_csv("https://raw.githubusercontent.com/chloemd/DAT-1019-Chloe/main/Homework/Unit4/data/fuelgov_img_urls.csv")
     return urls
 
 @st.cache
@@ -63,11 +63,11 @@ urls = load_urls()
 
 
 page = st.sidebar.radio('Section',
-                        ['Data Explorer', 'Vehicle Details'])
+                        ['Explore Data', 'Browse Vehicles', 'Compare Vehicles'])
 
 
 
-if page == 'Data Explorer':
+if page == 'Explore Data':
     st.markdown("""
                 <style>
                 table td:nth-child(1) {
@@ -138,7 +138,7 @@ if page == 'Data Explorer':
         #    chart.set_xticklabels(rotation=90)
         #st.pyplot(chart)
    
-if page == 'Vehicle Details':
+if page == 'Browse Vehicles':
     st.markdown("""
                 <style>
                 table td:nth-child(1) {
@@ -172,4 +172,51 @@ if page == 'Vehicle Details':
     st.table(df[(df['Year'] == year) & (df['Make'] == make) & (df['Model'] == model)][car_info_cols])
 
     
+if page == 'Compare Vehicles':
+   
+    st.markdown("""
+                <style>
+                table td:nth-child(1) {
+                    display: none
+                    }
+                table th:nth-child(1) {
+                    display: none
+                    }
+                </style>
+                """, unsafe_allow_html=True)
+    unique_years = df['Year'].unique().tolist()
+    x_cols = ['Year', 'Class', 'Drive', 'Transmission', 'Fuel Type', 'Engine Cylinders', 'Engine Displacement']
+    car_info_cols = ['Class', 'Transmission','Combined MPG (FT1)', 'Annual Fuel Cost (FT1)']
+    with st.beta_expander(label="Select Vehicles to Compare"):
+        col1, col2 = st.beta_columns(2)
+        with col1:
+            v1_year = st.selectbox('Vehicle 1 Year', unique_years, index=len(unique_years)-1)
+            v1_make = st.selectbox('Vehicle 1 Make', df[df['Year'] == v1_year]['Make'].unique().tolist(), index=0)
+            v1_model = st.selectbox('Vehicle 1 Model', df[(df['Year'] == v1_year) & (df['Make'] == v1_make)]['Model'].unique().tolist(), index=0)
+            
+            
+        
+        with col2:
+            v2_year = st.selectbox('Vehicle 2 Year', unique_years, index=len(unique_years)-2)
+            v2_make = st.selectbox('Vehicle 2 Make', df[df['Year'] == v2_year]['Make'].unique().tolist(), index=0)
+            v2_model = st.selectbox('Vehicle 2 Model', df[(df['Year'] == v2_year) & (df['Make'] == v2_make)]['Model'].unique().tolist(), index=0)
     
+    
+    col3, col4 = st.beta_columns(2)
+    
+    with col3:
+        v1_url = urls[(urls['Year'] == v1_year) & (urls['Make'] == v1_make) & (urls['Model'] == v1_model)]['Image Url'].item()
+        st.text("")
+        st.text("")
+        st.markdown(f"![Picture of: {v1_year} {v1_make} {v1_model}]({v1_url})", unsafe_allow_html=True)
+        st.subheader(f"{v1_year} {v1_make} {v1_model}")
+        st.table(df[(df['Year'] == v1_year) & (df['Make'] == v1_make) & (df['Model'] == v1_model)][car_info_cols])
+        
+    with col4:
+        v2_url = urls[(urls['Year'] == v2_year) & (urls['Make'] == v2_make) & (urls['Model'] == v2_model)]['Image Url'].item()
+        st.text("")
+        st.text("")
+        st.markdown(f"![Picture of: {v2_year} {v2_make} {v2_model}]({v2_url})", unsafe_allow_html=True)
+        st.subheader(f"{v2_year} {v2_make} {v2_model}")
+        st.table(df[(df['Year'] == v2_year) & (df['Make'] == v2_make) & (df['Model'] == v2_model)][car_info_cols])
+        
