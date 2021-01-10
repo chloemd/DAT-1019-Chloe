@@ -36,7 +36,7 @@ def load_data():
 
 @st.cache
 def load_preds():
-    df = pd.read_csv("https://raw.githubusercontent.com/chloemd/DAT-1019-Chloe/main/Homework/Unit4/data/fuel_eco_clean_predictions.csv")
+    df = pd.read_csv("https://raw.githubusercontent.com/chloemd/DAT-1019-Chloe/main/Homework/Unit4/data/fuel_eco_clean_averages.csv")
     return df
 
 @st.cache
@@ -167,13 +167,13 @@ if page == 'Explore Model':
     
     
     num_rounds      = st.sidebar.number_input('Number of Boosting Rounds',
-                                 min_value=50, max_value=500, step=50)
+                                 min_value=50, max_value=500, step=50, value=150)
     
     tree_depth      = st.sidebar.number_input('Tree Depth',
-                                 min_value=2, max_value=6, step=1, value=3)
+                                 min_value=2, max_value=6, step=1, value=5)
     
     learning_rate   = st.sidebar.number_input('Learning Rate',
-                                    min_value=.001, max_value=1.0, step=.05, value=0.1)
+                                    min_value=.001, max_value=1.0, step=.05, value=0.15)
     
     validation_size = st.sidebar.number_input('Validation Proportion',
                                       min_value=.1, max_value=.5, step=.1, value=0.2)
@@ -246,10 +246,10 @@ if page == 'Browse Vehicles':
     pred = preds[(preds['Year'] == year) & (preds['Make'] == make) & (preds['Model'] == model)]
     
     
-    year_diff = pred['MPG - Year Ave. Difference'].item()
-    class_diff = pred['MPG - Class Ave. Difference'].item()
+    year_avg = pred['MPG (Year Average)'].item()
+    class_avg = pred['MPG (Class Average)'].item()
     vehicle_class = pred['Class'].item()
-    make_diff = pred['MPG - Make Ave. Difference'].item()
+    make_avg = pred['MPG (Make Average)'].item()
     
     
     
@@ -259,12 +259,12 @@ if page == 'Browse Vehicles':
     st.table(df[(df['Year'] == year) & (df['Make'] == make) & (df['Model'] == model)][car_info_cols])
     
     st.write("")
-    st.subheader("Average Combined MPG (FT1) for:")
+    st.subheader("Average Combined MPG (FT1) for")
     
     average_vals = pd.DataFrame({
-        vehicle_class: class_diff,
-        f"Vehicles made in {year}": year_diff,
-        f"{make}s": make_diff},
+        vehicle_class: class_avg,
+        f"Vehicles made in {year}": year_avg,
+        f"{make}s": make_avg},
         index=['Values'])
     st.table(average_vals)
     
