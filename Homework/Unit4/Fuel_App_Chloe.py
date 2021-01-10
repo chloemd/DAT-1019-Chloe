@@ -19,7 +19,7 @@ import seaborn as sns
 import xgboost as xgb
 from matplotlib.pyplot import style
 from sklearn.model_selection import train_test_split
-from category_encoders import OneHotEncoder
+from category_encoders import TargetEncoder
 from sklearn.pipeline import make_pipeline
 from pdpbox import pdp
 import plotly.express as px
@@ -32,6 +32,11 @@ st.title("Fuel Economy Data")
 @st.cache
 def load_data():
     df = pd.read_csv("https://raw.githubusercontent.com/chloemd/DAT-1019-Chloe/main/Homework/Unit4/data/fuel_eco_clean.csv")
+    return df
+
+@st.cache
+def load_preds():
+    df = pd.read_csv("https://raw.githubusercontent.com/chloemd/DAT-1019-Chloe/main/Homework/Unit4/data/fuel_eco_clean_predictions.csv")
     return df
 
 @st.cache
@@ -63,7 +68,7 @@ urls = load_urls()
 
 
 page = st.sidebar.radio('Section',
-                        ['Explore Data', 'Browse Vehicles', 'Compare Vehicles'])
+                        ['Explore Data', 'Explore Model', 'Browse Vehicles', 'Compare Vehicles'])
 
 
 
@@ -99,10 +104,15 @@ if page == 'Explore Data':
     y_axis = st.sidebar.selectbox(
              'Y-Axis',
              y_cols
-            # df.select_dtypes(include=np.number).columns.tolist()
+            
             )
     
+    st.cache()
+    data = df.groupby(x_axis)[y_axis].mean().reset_index()
+    
     want_min = ['Annual Fuel Cost (FT1)', 'Tailpipe CO2 (FT1)']
+    
+    
     
     if y_axis in want_min:
         if sort_bool:
@@ -119,26 +129,93 @@ if page == 'Explore Data':
     
     chart_type = st.sidebar.selectbox(
             'Select a chart type:',
-            ['Line', 'Bar', 'Box'])
+            ['Line', 'Bar', 'Box', 'Violin'])
     
     
     st.subheader(f"Breaking Down {y_axis} by: {x_axis}")
     if chart_type == 'Line':
-        data = create_groupby_object(x_axis, y_axis)
-        st.line_chart(data)
+        chart = px.line(data, x=x_axis, y=y_axis)
+        st.write(chart)
     elif chart_type == 'Bar':
-        data = create_groupby_object(x_axis, y_axis)
-        st.bar_chart(data)
-        # chart = px.bar(df, x=x_axis, y=y_axis)
-        # st.write(chart)
+        chart = px.bar(data, x=x_axis, y=y_axis)
+        st.write(chart)
     elif chart_type == 'Box':
         chart = px.box(df, x=x_axis, y=y_axis)
         st.write(chart)
-        #if df[x_axis].nunique() > 8:
-        #    chart.set_xticklabels(rotation=90)
-        #st.pyplot(chart)
+    elif chart_type == 'Violin':
+        chart = px.violin(df, x=x_axis, y=y_axis)
+        st.write(chart)
+
+if page == 'Explore Model':
+    st.cache()
+    cols_to_drop = ['City MPG (FT1)', 'Unrounded City MPG (FT1)','City MPG (FT2)','Unrounded City MPG (FT2)',
+ 'Highway MPG (FT1)','Unrounded Highway MPG (FT1)','Highway MPG (FT2)','Unrounded Highway MPG (FT2)',
+ 'Unadjusted City MPG (FT1)','Unadjusted Highway MPG (FT1)','Unadjusted City MPG (FT2)',
+ 'Unadjusted Highway MPG (FT2)','Combined MPG (FT1)','Unrounded Combined MPG (FT1)','Combined MPG (FT2)',
+ 'Unrounded Combined MPG (FT2)',
+ 'My MPG Data','Composite City MPG','Composite Highway MPG','Composite Combined MPG','City Range (FT1)',
+ 'Range (FT1)','City Range (FT1)','Highway Range (FT1)','City Range (FT2)','Highway Range (FT2)',
+ 'Range (FT2) Clean','Save or Spend (5 Year)','Tailpipe CO2 (FT1)','Annual Fuel Cost (FT1)',
+ 'Annual Consumption in Barrels (FT1)','Tailpipe CO2 in Grams/Mile (FT1)','Fuel Economy Score',
+ 'GHG Score','City Gasoline Consumption (CD)','City Electricity Consumption',
+ 'Highway Gasoline Consumption (CD)','Highway Electricity Consumption','Combined Electricity Consumption',
+ 'Combined Gasoline Consumption (CD)','Annual Consumption in Barrels (FT1)','Annual Consumption in Barrels (FT2)',
+ 'Fuel Type','Fuel Type 1','Fuel Type 2','Alternative Fuel/Technology','Gas Guzzler Tax']
+    st.cache()
+    pipe = make_pipeline(TargetEncoder(), xgb.XGBRegressor())
+    
+    
+    
+    num_rounds      = st.sidebar.number_input('Number of Boosting Rounds',
+                                 min_value=50, max_value=500, step=50)
+    
+    tree_depth      = st.sidebar.number_input('Tree Depth',
+                                 min_value=2, max_value=6, step=1, value=3)
+    
+    learning_rate   = st.sidebar.number_input('Learning Rate',
+                                    min_value=.001, max_value=1.0, step=.05, value=0.1)
+    
+    validation_size = st.sidebar.number_input('Validation Proportion',
+                                      min_value=.1, max_value=.5, step=.1, value=0.2)
+    
+    random_state    = st.sidebar.number_input('Random State', value=2021)
+    
+    
+    st.cache()
+    X_train, X_val, y_train, y_val = train_test_split(df.drop(cols_to_drop, axis=1), df['Combined MPG (FT1)'], test_size=validation_size, random_state=random_state) 
+    
+    
+    pipe[1].set_params(n_estimators=num_rounds, max_depth=tree_depth, learning_rate=learning_rate)
+    
+    pipe.fit(X_train, y_train)
+    
+    mod_results = pd.DataFrame({
+            'Train Size': X_train.shape[0],
+            'Validation Size': X_val.shape[0],
+            'Boosting Rounds': num_rounds,
+            'Tree Depth': tree_depth,
+            'Learning Rate': learning_rate,
+            'Training Score': pipe.score(X_train, y_train),
+            'Validation Score': pipe.score(X_val, y_val)
+            }, index=['Values'])
+ 
+    st.subheader("Model Results")
+    st.table(mod_results)
+    
+    st.write('')
+    st.subheader("Real vs Predicted Validation Values")
+    
+    
+    st.cache()
+    
+    
+    chart = sns.regplot(x=pipe.predict(X_val), y=y_val)
+    st.pyplot(chart.figure)
    
 if page == 'Browse Vehicles':
+    st.cache()
+    preds = load_preds()
+    
     st.markdown("""
                 <style>
                 table td:nth-child(1) {
@@ -166,11 +243,30 @@ if page == 'Browse Vehicles':
         df[(df['Year'] == year) & (df['Make'] == make)]['Model'].unique().tolist(),
         index=0)
     
+    pred = preds[(preds['Year'] == year) & (preds['Make'] == make) & (preds['Model'] == model)]
+    
+    
+    year_diff = pred['MPG - Year Ave. Difference'].item()
+    class_diff = pred['MPG - Class Ave. Difference'].item()
+    vehicle_class = pred['Class'].item()
+    make_diff = pred['MPG - Make Ave. Difference'].item()
+    
+    
+    
     url = urls[(urls['Year'] == year) & (urls['Make'] == make) & (urls['Model'] == model)]['Image Url'].item()
     st.sidebar.markdown(f"![Picture of: {year} {make} {model}]({url})", unsafe_allow_html=True)
     st.subheader(f"{year} {make} {model}")
     st.table(df[(df['Year'] == year) & (df['Make'] == make) & (df['Model'] == model)][car_info_cols])
-
+    
+    st.write("")
+    st.subheader("Average Combined MPG (FT1) for:")
+    
+    average_vals = pd.DataFrame({
+        vehicle_class: class_diff,
+        f"Vehicles made in {year}": year_diff,
+        f"{make}s": make_diff},
+        index=['Values'])
+    st.table(average_vals)
     
 if page == 'Compare Vehicles':
    
